@@ -86,3 +86,17 @@ The code given is structured as follows. Feel free however to modify the structu
 * [Sqlite3](https://sqlite.org/index.html) - Database storage engine
 
 Happy hacking 😁!
+
+### Way of implementing
+
+#### 24 May (In total: 4h)
+* Installation, project deploy (1h)
+* Libraries review (2h)
+* Project review (1h)
+
+##### Points to thinking about:
+* Changing model structure (There's no date from which user started using application -- could be difficult for billing and defining if he payed or not.)
+* Sqlite3 performance
+* Could 'docker run' be faster?
+* Split AntaeusDal for several interfaces: each works with one entity type
+* Invoice table will be huge in the future. Will all information be needed? Should it be archived?
