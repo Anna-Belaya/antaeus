@@ -7,6 +7,7 @@ package io.pleo.antaeus.core.services
 import io.pleo.antaeus.core.exceptions.CustomerNotFoundException
 import io.pleo.antaeus.data.AntaeusDal
 import io.pleo.antaeus.models.Customer
+import java.math.BigDecimal
 
 class CustomerService(private val dal: AntaeusDal) {
     fun fetchAll(): List<Customer> {

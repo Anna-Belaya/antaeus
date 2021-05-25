@@ -15,6 +15,11 @@ import io.pleo.antaeus.data.AntaeusDal
 import io.pleo.antaeus.data.CustomerTable
 import io.pleo.antaeus.data.InvoiceTable
 import io.pleo.antaeus.rest.AntaeusRest
+import it.justwrote.kjob.InMem
+import it.justwrote.kjob.KronJob
+import it.justwrote.kjob.kjob
+import it.justwrote.kjob.kron.Kron
+import it.justwrote.kjob.kron.KronModule
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.StdOutSqlLogger
@@ -24,6 +29,9 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import setupInitialData
 import java.io.File
 import java.sql.Connection
+
+object MonthlyScheduledPaymentJob : KronJob("monthly-scheduled-payment-job", "0 0 0 1 * ?")
+object TestingJob : KronJob("testing-job", "0 * * ? * *")
 
 fun main() {
     // The tables to create in the database.
@@ -53,19 +61,37 @@ fun main() {
     // Insert example data in the database.
     setupInitialData(dal = dal)
 
-    // Get third parties
-    val paymentProvider = getPaymentProvider()
-
     // Create core services
     val invoiceService = InvoiceService(dal = dal)
     val customerService = CustomerService(dal = dal)
 
+    // Get third parties
+    val paymentProvider = getPaymentProvider(customerService)
+
     // This is _your_ billing service to be included where you see fit
-    val billingService = BillingService(paymentProvider = paymentProvider)
+    val billingService = BillingService(
+        paymentProvider = paymentProvider,
+        invoiceService = invoiceService,
+        dal = dal
+    )
+
+    val kjob = kjob(InMem) {
+        extension(KronModule)
+    }.start()
+
+//    kjob(Kron).kron(MonthlyScheduledPaymentJob) {
+    kjob(Kron).kron(TestingJob) {
+        maxRetries = 3
+        execute {
+            billingService.chargeBills()
+        }
+    }
 
     // Create REST web service
     AntaeusRest(
         invoiceService = invoiceService,
-        customerService = customerService
+        customerService = customerService,
+        //just for testing
+        billingService = billingService
     ).run()
 }

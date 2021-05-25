@@ -1,5 +1,6 @@
-
 import io.pleo.antaeus.core.external.PaymentProvider
+import io.pleo.antaeus.core.external.PaymentProviderImpl
+import io.pleo.antaeus.core.services.CustomerService
 import io.pleo.antaeus.data.AntaeusDal
 import io.pleo.antaeus.models.Currency
 import io.pleo.antaeus.models.Invoice
@@ -12,7 +13,8 @@ import kotlin.random.Random
 internal fun setupInitialData(dal: AntaeusDal) {
     val customers = (1..100).mapNotNull {
         dal.createCustomer(
-            currency = Currency.values()[Random.nextInt(0, Currency.values().size)]
+            currency = Currency.values()[Random.nextInt(0, Currency.values().size)],
+            balance = BigDecimal(Random.nextDouble(10.0, 500.0))
         )
     }
 
@@ -31,10 +33,6 @@ internal fun setupInitialData(dal: AntaeusDal) {
 }
 
 // This is the mocked instance of the payment provider
-internal fun getPaymentProvider(): PaymentProvider {
-    return object : PaymentProvider {
-        override fun charge(invoice: Invoice): Boolean {
-                return Random.nextBoolean()
-        }
-    }
+internal fun getPaymentProvider(customerService: CustomerService): PaymentProvider {
+    return PaymentProviderImpl(customerService)
 }

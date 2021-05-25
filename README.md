@@ -100,3 +100,22 @@ Happy hacking 😁!
 * Could 'docker run' be faster?
 * Split AntaeusDal for several interfaces: each works with one entity type
 * Invoice table will be huge in the future. Will all information be needed? Should it be archived?
+
+#### 25 May (In total: 5h)
+* Review documentation (exposed queries, cron job) (1h)
+* Implementing simple version of application: (4h)
+  * Adds balance for user
+  * Negative cases aren't handled for now
+  * Write simple cron job to test billing functionality
+
+##### Points to thinking about:
+* Problem when database row could be updated by multiple users. Some locking mechanism? Or to use async approach? Maybe use queue to avoid duplicates in payment process (something like publish–subscribe model)?
+* Exceptions handling
+* Customer could have many invoices. How to define order of payment?
+* Queries processing in a more optimised way (indexes; grouping invoices by status and customer id to perform batch actions and increase database calls)
+
+##### Points for improvements:
+* Transform value in accordance in currency to make payment possible even in currencies don't match
+* Implement mock service for balance increasing every months (f.e. after salary)
+* Payment optimization. User could have many invoices. Service should define maximum possible invoices that could be paid in accordance with user balance.
+ 

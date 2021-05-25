@@ -13,10 +13,13 @@ import io.pleo.antaeus.models.Invoice
 import io.pleo.antaeus.models.InvoiceStatus
 import io.pleo.antaeus.models.Money
 import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.SqlExpressionBuilder
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.update
+import java.math.BigDecimal
 
 class AntaeusDal(private val db: Database) {
     fun fetchInvoice(id: Int): Invoice? {
@@ -34,6 +37,14 @@ class AntaeusDal(private val db: Database) {
         return transaction(db) {
             InvoiceTable
                 .selectAll()
+                .map { it.toInvoice() }
+        }
+    }
+
+    fun fetchInvoicesByStatus(invoiceStatus: InvoiceStatus): List<Invoice> {
+        return transaction(db) {
+            InvoiceTable
+                .select { InvoiceTable.status.eq(invoiceStatus.name) }
                 .map { it.toInvoice() }
         }
     }
@@ -70,14 +81,42 @@ class AntaeusDal(private val db: Database) {
         }
     }
 
-    fun createCustomer(currency: Currency): Customer? {
+    fun createCustomer(currency: Currency, balance: BigDecimal): Customer? {
         val id = transaction(db) {
             // Insert the customer and return its new id.
             CustomerTable.insert {
                 it[this.currency] = currency.toString()
+                it[this.balance] = balance
             } get CustomerTable.id
         }
 
         return fetchCustomer(id)
+    }
+
+    fun makePayment(invoiceId: Int, customerId: Int, subtractedBalanceValue: BigDecimal) {
+        transaction(db) {
+            subtractCustomerBalance(customerId, subtractedBalanceValue)
+            updateInvoiceToBePaid(invoiceId)
+        }
+    }
+
+    private fun subtractCustomerBalance(customerId: Int, subtractedBalanceValue: BigDecimal) {
+        CustomerTable
+            .update(
+                where = { CustomerTable.id.eq(customerId) }
+            ) {
+                with(SqlExpressionBuilder) {
+                    it.update(balance, balance - subtractedBalanceValue)
+                }
+            }
+    }
+
+    private fun updateInvoiceToBePaid(invoiceId: Int) {
+        InvoiceTable
+            .update(
+                where = { InvoiceTable.id.eq(invoiceId) }
+            ) {
+                it[status] = InvoiceStatus.PAID.toString()
+            }
     }
 }
