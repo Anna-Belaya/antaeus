@@ -109,7 +109,9 @@ Happy hacking 😁!
   * Write simple cron job to test billing functionality
 
 ##### Points to thinking about:
-* Problem when database row could be updated by multiple users. Some locking mechanism? Or to use async approach? Maybe use queue to avoid duplicates in payment process (something like publish–subscribe model)?
+* Problem when database row could be updated by multiple users. Some locking mechanism? 
+* To use async approach? 
+* Maybe use queue to avoid duplicates in payment process (something like publish–subscribe model)?
 * Exceptions handling
 * Customer could have many invoices. How to define order of payment?
 * Queries processing in a more optimised way (indexes; grouping invoices by status and customer id to perform batch actions and increase database calls)
@@ -124,6 +126,9 @@ Happy hacking 😁!
 * Review coroutines documentation (0.5h)
 * Implements asynchronous approach (2h)
 
+##### Points to thinking about:
+* Issue when multiple users edit same row is still actual
+
 ##### Points for improvements:
-* Send an email for any result from cron job.
+* Send an email for any result from cron job, exceptions
  

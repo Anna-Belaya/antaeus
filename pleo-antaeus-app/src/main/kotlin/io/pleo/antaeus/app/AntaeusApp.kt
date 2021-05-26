@@ -90,11 +90,7 @@ fun main() {
         executionType = JobExecutionType.NON_BLOCKING
         maxRetries = 3
         execute {
-            runBlocking {
-                launch {
-                    billingService.chargeBills()
-                }
-            }
+            billingService.chargeBills()
         }.onError {
             logger.error("Job has failed")
             /*
