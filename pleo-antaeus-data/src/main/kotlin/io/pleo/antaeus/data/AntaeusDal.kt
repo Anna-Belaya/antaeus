@@ -12,19 +12,21 @@ import io.pleo.antaeus.models.Customer
 import io.pleo.antaeus.models.Invoice
 import io.pleo.antaeus.models.InvoiceStatus
 import io.pleo.antaeus.models.Money
+import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SqlExpressionBuilder
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import java.math.BigDecimal
 
 class AntaeusDal(private val db: Database) {
-    fun fetchInvoice(id: Int): Invoice? {
+    suspend fun fetchInvoice(id: Int): Invoice? {
         // transaction(db) runs the internal query as a new database transaction.
-        return transaction(db) {
+        return newSuspendedTransaction(Dispatchers.IO, db) {
             // Returns the first invoice with matching id.
             InvoiceTable
                 .select { InvoiceTable.id.eq(id) }
@@ -33,24 +35,24 @@ class AntaeusDal(private val db: Database) {
         }
     }
 
-    fun fetchInvoices(): List<Invoice> {
-        return transaction(db) {
+    suspend fun fetchInvoices(): List<Invoice> {
+        return newSuspendedTransaction(Dispatchers.IO, db) {
             InvoiceTable
                 .selectAll()
                 .map { it.toInvoice() }
         }
     }
 
-    fun fetchInvoicesByStatus(invoiceStatus: InvoiceStatus): List<Invoice> {
-        return transaction(db) {
+    suspend fun fetchInvoicesByStatus(invoiceStatus: InvoiceStatus): List<Invoice> {
+        return newSuspendedTransaction(Dispatchers.IO, db) {
             InvoiceTable
                 .select { InvoiceTable.status.eq(invoiceStatus.name) }
                 .map { it.toInvoice() }
         }
     }
 
-    fun createInvoice(amount: Money, customer: Customer, status: InvoiceStatus = InvoiceStatus.PENDING): Invoice? {
-        val id = transaction(db) {
+    suspend fun createInvoice(amount: Money, customer: Customer, status: InvoiceStatus = InvoiceStatus.PENDING): Invoice? {
+        val id = newSuspendedTransaction(Dispatchers.IO, db) {
             // Insert the invoice and returns its new id.
             InvoiceTable
                 .insert {
@@ -64,8 +66,8 @@ class AntaeusDal(private val db: Database) {
         return fetchInvoice(id)
     }
 
-    fun fetchCustomer(id: Int): Customer? {
-        return transaction(db) {
+    suspend fun fetchCustomer(id: Int): Customer? {
+        return newSuspendedTransaction(Dispatchers.IO, db) {
             CustomerTable
                 .select { CustomerTable.id.eq(id) }
                 .firstOrNull()
@@ -73,16 +75,16 @@ class AntaeusDal(private val db: Database) {
         }
     }
 
-    fun fetchCustomers(): List<Customer> {
-        return transaction(db) {
+    suspend fun fetchCustomers(): List<Customer> {
+        return newSuspendedTransaction(Dispatchers.IO, db) {
             CustomerTable
                 .selectAll()
                 .map { it.toCustomer() }
         }
     }
 
-    fun createCustomer(currency: Currency, balance: BigDecimal): Customer? {
-        val id = transaction(db) {
+    suspend fun createCustomer(currency: Currency, balance: BigDecimal): Customer? {
+        val id = newSuspendedTransaction(Dispatchers.IO, db) {
             // Insert the customer and return its new id.
             CustomerTable.insert {
                 it[this.currency] = currency.toString()
@@ -93,8 +95,8 @@ class AntaeusDal(private val db: Database) {
         return fetchCustomer(id)
     }
 
-    fun makePayment(invoiceId: Int, customerId: Int, subtractedBalanceValue: BigDecimal) {
-        transaction(db) {
+    suspend fun makePayment(invoiceId: Int, customerId: Int, subtractedBalanceValue: BigDecimal) {
+        newSuspendedTransaction(Dispatchers.IO, db) {
             subtractCustomerBalance(customerId, subtractedBalanceValue)
             updateInvoiceToBePaid(invoiceId)
         }

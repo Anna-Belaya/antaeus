@@ -12,6 +12,7 @@ import io.pleo.antaeus.core.exceptions.EntityNotFoundException
 import io.pleo.antaeus.core.services.BillingService
 import io.pleo.antaeus.core.services.CustomerService
 import io.pleo.antaeus.core.services.InvoiceService
+import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger {}
@@ -61,31 +62,41 @@ class AntaeusRest(
                     path("invoices") {
                         // URL: /rest/v1/invoices
                         get {
-                            it.json(invoiceService.fetchAll())
+                            runBlocking {
+                                it.json(invoiceService.fetchAll())
+                            }
                         }
 
                         // URL: /rest/v1/invoices/{:id}
                         get(":id") {
-                            it.json(invoiceService.fetch(it.pathParam("id").toInt()))
+                            runBlocking {
+                                it.json(invoiceService.fetch(it.pathParam("id").toInt()))
+                            }
                         }
                     }
 
                     path("customers") {
                         // URL: /rest/v1/customers
                         get {
-                            it.json(customerService.fetchAll())
+                            runBlocking {
+                                it.json(customerService.fetchAll())
+                            }
                         }
 
                         // URL: /rest/v1/customers/{:id}
                         get(":id") {
-                            it.json(customerService.fetch(it.pathParam("id").toInt()))
+                            runBlocking {
+                                it.json(customerService.fetch(it.pathParam("id").toInt()))
+                            }
                         }
                     }
 
                     path("billings") {
                         // URL: /rest/v1/billings
                         put {
-                            it.json(billingService.chargeBills())
+                            runBlocking {
+                                it.json(billingService.chargeBills())
+                            }
                         }
                     }
                 }

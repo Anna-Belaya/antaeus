@@ -6,13 +6,16 @@ import io.pleo.antaeus.core.exceptions.SideUpdateException
 import io.pleo.antaeus.core.services.CustomerService
 import io.pleo.antaeus.models.Invoice
 import io.pleo.antaeus.models.InvoiceStatus
+import mu.KotlinLogging
+
+private val logger = KotlinLogging.logger {}
 
 class PaymentProviderImpl(
-        private val customerService: CustomerService
+    private val customerService: CustomerService
 ) : PaymentProvider {
 
     @Throws(CustomerNotFoundException::class)
-    override fun charge(invoice: Invoice): Boolean {
+    override suspend fun charge(invoice: Invoice): Boolean {
         if (InvoiceStatus.PAID == invoice.status) {
             throw SideUpdateException(invoice.id)
         }
@@ -24,7 +27,11 @@ class PaymentProviderImpl(
         }
 
         if (customer.balance < invoice.amount.value) {
+            logger.info("Customer '$customer.id' doesn't have enough balance to make a payment")
             return false
+            /*
+            * Maybe send a notification to a customer.
+            * */
         }
 
         return true

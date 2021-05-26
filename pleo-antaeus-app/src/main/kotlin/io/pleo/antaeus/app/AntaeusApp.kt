@@ -17,9 +17,12 @@ import io.pleo.antaeus.data.InvoiceTable
 import io.pleo.antaeus.rest.AntaeusRest
 import it.justwrote.kjob.InMem
 import it.justwrote.kjob.KronJob
+import it.justwrote.kjob.job.JobExecutionType
 import it.justwrote.kjob.kjob
 import it.justwrote.kjob.kron.Kron
 import it.justwrote.kjob.kron.KronModule
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.StdOutSqlLogger
@@ -59,7 +62,9 @@ fun main() {
     val dal = AntaeusDal(db = db)
 
     // Insert example data in the database.
-    setupInitialData(dal = dal)
+    runBlocking {
+        setupInitialData(dal = dal)
+    }
 
     // Create core services
     val invoiceService = InvoiceService(dal = dal)
@@ -75,15 +80,31 @@ fun main() {
         dal = dal
     )
 
+    // InMem for testing purpose only
     val kjob = kjob(InMem) {
         extension(KronModule)
     }.start()
 
 //    kjob(Kron).kron(MonthlyScheduledPaymentJob) {
     kjob(Kron).kron(TestingJob) {
+        executionType = JobExecutionType.NON_BLOCKING
         maxRetries = 3
         execute {
-            billingService.chargeBills()
+            runBlocking {
+                launch {
+                    billingService.chargeBills()
+                }
+            }
+        }.onError {
+            logger.error("Job has failed")
+            /*
+            * A email could be sent.
+            * */
+        }.onComplete {
+            logger.info("Job has finished")
+            /*
+            * A email could be sent.
+            * */
         }
     }
 

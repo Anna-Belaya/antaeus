@@ -118,4 +118,12 @@ Happy hacking 😁!
 * Transform value in accordance in currency to make payment possible even in currencies don't match
 * Implement mock service for balance increasing every months (f.e. after salary)
 * Payment optimization. User could have many invoices. Service should define maximum possible invoices that could be paid in accordance with user balance.
+
+#### 26 May (In total: 3h)
+* Adds exception handling (0.5h)
+* Review coroutines documentation (0.5h)
+* Implements asynchronous approach (2h)
+
+##### Points for improvements:
+* Send an email for any result from cron job.
  
