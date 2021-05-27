@@ -95,7 +95,7 @@ class AntaeusRest(
                         // URL: /rest/v1/billings
                         put {
                             runBlocking {
-                                it.json(billingService.chargeBills())
+                                it.json(billingService.chargeInvoices())
                             }
                         }
                     }

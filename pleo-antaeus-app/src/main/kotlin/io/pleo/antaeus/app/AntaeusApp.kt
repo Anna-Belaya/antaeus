@@ -11,8 +11,10 @@ import getPaymentProvider
 import io.pleo.antaeus.core.services.BillingService
 import io.pleo.antaeus.core.services.CustomerService
 import io.pleo.antaeus.core.services.InvoiceService
-import io.pleo.antaeus.data.AntaeusDal
+import io.pleo.antaeus.data.PaymentDal
+import io.pleo.antaeus.data.CustomerDal
 import io.pleo.antaeus.data.CustomerTable
+import io.pleo.antaeus.data.InvoiceDal
 import io.pleo.antaeus.data.InvoiceTable
 import io.pleo.antaeus.rest.AntaeusRest
 import it.justwrote.kjob.InMem
@@ -21,7 +23,6 @@ import it.justwrote.kjob.job.JobExecutionType
 import it.justwrote.kjob.kjob
 import it.justwrote.kjob.kron.Kron
 import it.justwrote.kjob.kron.KronModule
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -59,16 +60,18 @@ fun main() {
         }
 
     // Set up data access layer.
-    val dal = AntaeusDal(db = db)
+    val paymentDal = PaymentDal(db = db)
+    val invoiceDal = InvoiceDal(db = db)
+    val customerDal = CustomerDal(db = db)
 
     // Insert example data in the database.
     runBlocking {
-        setupInitialData(dal = dal)
+        setupInitialData(invoiceDal = invoiceDal, customerDal = customerDal)
     }
 
     // Create core services
-    val invoiceService = InvoiceService(dal = dal)
-    val customerService = CustomerService(dal = dal)
+    val invoiceService = InvoiceService(dal = invoiceDal)
+    val customerService = CustomerService(dal = customerDal)
 
     // Get third parties
     val paymentProvider = getPaymentProvider(customerService)
@@ -77,10 +80,10 @@ fun main() {
     val billingService = BillingService(
         paymentProvider = paymentProvider,
         invoiceService = invoiceService,
-        dal = dal
+        paymentDal = paymentDal
     )
 
-    // InMem for testing purpose only
+    /*// InMem for testing purpose only
     val kjob = kjob(InMem) {
         extension(KronModule)
     }.start()
@@ -90,19 +93,19 @@ fun main() {
         executionType = JobExecutionType.NON_BLOCKING
         maxRetries = 3
         execute {
-            billingService.chargeBills()
+            billingService.chargeInvoices()
         }.onError {
             logger.error("Job has failed")
-            /*
+            *//*
             * A email could be sent.
-            * */
+            * *//*
         }.onComplete {
             logger.info("Job has finished")
-            /*
+            *//*
             * A email could be sent.
-            * */
+            * *//*
         }
-    }
+    }*/
 
     // Create REST web service
     AntaeusRest(

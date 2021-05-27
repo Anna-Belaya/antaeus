@@ -5,6 +5,7 @@
 
 package io.pleo.antaeus.data
 
+import io.pleo.antaeus.data.InvoiceTable.created
 import io.pleo.antaeus.models.Currency
 import io.pleo.antaeus.models.Customer
 import io.pleo.antaeus.models.Invoice
@@ -19,7 +20,8 @@ fun ResultRow.toInvoice(): Invoice = Invoice(
         currency = Currency.valueOf(this[InvoiceTable.currency])
     ),
     status = InvoiceStatus.valueOf(this[InvoiceTable.status]),
-    customerId = this[InvoiceTable.customerId]
+    customerId = this[InvoiceTable.customerId],
+    created = this[created]
 )
 
 fun ResultRow.toCustomer(): Customer = Customer(

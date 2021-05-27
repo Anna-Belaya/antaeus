@@ -27,7 +27,7 @@ class PaymentProviderImpl(
         }
 
         if (customer.balance < invoice.amount.value) {
-            logger.info("Customer '$customer.id' doesn't have enough balance to make a payment")
+            logger.debug("Customer '${customer.id}' doesn't have enough balance to make a payment")
             return false
             /*
             * Maybe send a notification to a customer.

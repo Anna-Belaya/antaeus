@@ -98,7 +98,7 @@ Happy hacking 😁!
 * Changing model structure (There's no date from which user started using application -- could be difficult for billing and defining if he payed or not.)
 * Sqlite3 performance
 * Could 'docker run' be faster?
-* Split AntaeusDal for several interfaces: each works with one entity type
+* Split AntaeusDal for several interfaces: each works with one entity type.
 * Invoice table will be huge in the future. Will all information be needed? Should it be archived?
 
 #### 25 May (In total: 5h)
@@ -131,4 +131,17 @@ Happy hacking 😁!
 
 ##### Points for improvements:
 * Send an email for any result from cron job, exceptions
- 
+
+#### 27 May (In total: 5h)
+* Updates payment logic: invoice are grouped by customer id to prevent situation when two invoices are with the same customer id and balance of one user is changed (the same record in db) (1h)
+* Refactored dal class to have a separate dal class for each entity type (0.25h)
+* Adds created date field in the database. Currently invoices are fetched filtered by status and date (data for previous month) (2h)
+
+##### Points to thinking about:
+* I would increase concurrency during payment to speed up charging. Maybe use locking of database record for a certain customerId.
+* Optimization of queries.
+Read about issues in exposed library to perform batch calls.
+* How to handle critical situations (f.e server isn't working)? 
+    * Are retries and transactions enough? 
+    * Maybe store invoices in external queue? It could help not to miss any invoices charging even after server break. 
+    * Load Balancer could be also helpful if server broke.
