@@ -145,3 +145,14 @@ Read about issues in exposed library to perform batch calls.
     * Are retries and transactions enough? 
     * Maybe store invoices in external queue? It could help not to miss any invoices charging even after server break. 
     * Load Balancer could be also helpful if server broke.
+
+#### 28 May (In total: 4.5h)
+* Adds unit tests for data package
+* Refactors
+
+#### 29 May (In total: 3h)
+* Adds unit tests for core package
+* Updates BillingService
+
+##### Points for improvements:
+* Retrieve invoices using pagination

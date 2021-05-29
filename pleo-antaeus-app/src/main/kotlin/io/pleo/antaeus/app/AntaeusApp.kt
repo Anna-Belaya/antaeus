@@ -11,6 +11,7 @@ import getPaymentProvider
 import io.pleo.antaeus.core.services.BillingService
 import io.pleo.antaeus.core.services.CustomerService
 import io.pleo.antaeus.core.services.InvoiceService
+import io.pleo.antaeus.core.services.PaymentService
 import io.pleo.antaeus.data.PaymentDal
 import io.pleo.antaeus.data.CustomerDal
 import io.pleo.antaeus.data.CustomerTable
@@ -70,6 +71,7 @@ fun main() {
     }
 
     // Create core services
+    val paymentService = PaymentService(dal = paymentDal)
     val invoiceService = InvoiceService(dal = invoiceDal)
     val customerService = CustomerService(dal = customerDal)
 
@@ -80,7 +82,7 @@ fun main() {
     val billingService = BillingService(
         paymentProvider = paymentProvider,
         invoiceService = invoiceService,
-        paymentDal = paymentDal
+        paymentService = paymentService
     )
 
     /*// InMem for testing purpose only

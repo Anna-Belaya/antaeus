@@ -4,7 +4,6 @@ import io.pleo.antaeus.models.Currency
 import io.pleo.antaeus.models.Customer
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll

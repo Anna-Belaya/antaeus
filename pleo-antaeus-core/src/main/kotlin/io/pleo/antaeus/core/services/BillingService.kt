@@ -5,7 +5,6 @@ import io.pleo.antaeus.core.exceptions.CustomerNotFoundException
 import io.pleo.antaeus.core.exceptions.NetworkException
 import io.pleo.antaeus.core.exceptions.SideUpdateException
 import io.pleo.antaeus.core.external.PaymentProvider
-import io.pleo.antaeus.data.PaymentDal
 import io.pleo.antaeus.models.Invoice
 import io.pleo.antaeus.models.InvoiceStatus
 import kotlinx.coroutines.launch
@@ -18,7 +17,7 @@ private val logger = KotlinLogging.logger {}
 class BillingService(
     private val paymentProvider: PaymentProvider,
     private val invoiceService: InvoiceService,
-    private val paymentDal: PaymentDal
+    private val paymentService: PaymentService
 ) {
     fun chargeInvoices() = runBlocking {
         val startPaymentDate = LocalDateTime.now()
@@ -50,7 +49,7 @@ class BillingService(
     private fun chargeInvoice(invoice: Invoice) = runBlocking {
         try {
             if (paymentProvider.charge(invoice)) {
-                paymentDal.makePayment(invoice.id, invoice.customerId, invoice.amount.value)
+                paymentService.makePayment(invoice.id, invoice.customerId, invoice.amount.value)
                 logger.debug("Invoice with ${invoice.id} has been paid")
             }
         } catch (e: SideUpdateException) {
