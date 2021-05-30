@@ -77,12 +77,4 @@ class CustomerServiceTest {
 
         coVerify(exactly = 1) { dal.fetchCustomer(customerId) }
     }
-
-    private fun generateCustomer(id: Int): Customer {
-        return Customer(
-            id = id,
-            currency = Currency.values()[Random.nextInt(0, Currency.values().size)],
-            balance = BigDecimal(Random.nextDouble(10.0, 500.0))
-        )
-    }
 }

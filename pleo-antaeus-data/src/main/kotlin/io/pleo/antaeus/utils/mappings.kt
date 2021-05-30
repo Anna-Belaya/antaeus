@@ -3,9 +3,9 @@
     To be used by `AntaeusDal`.
  */
 
-package io.pleo.antaeus.data
+package io.pleo.antaeus.utils
 
-import io.pleo.antaeus.data.InvoiceTable.created
+import io.pleo.antaeus.utils.InvoiceTable.created
 import io.pleo.antaeus.models.Currency
 import io.pleo.antaeus.models.Customer
 import io.pleo.antaeus.models.Invoice

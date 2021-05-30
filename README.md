@@ -62,8 +62,7 @@ The code given is structured as follows. Feel free however to modify the structu
 |       main() & initialization
 |
 ├── pleo-antaeus-core
-|       This is probably where you will introduce most of your new code.
-|       Pay attention to the PaymentProvider and BillingService class.
+|       Services.
 |
 ├── pleo-antaeus-data
 |       Module interfacing with the database. Contains the database 
@@ -86,6 +85,56 @@ The code given is structured as follows. Feel free however to modify the structu
 * [Sqlite3](https://sqlite.org/index.html) - Database storage engine
 
 Happy hacking 😁!
+
+### Project Summary (More detailed information could be find in the 'Way of implementing' section below)
+
+Billing is implemented with cron job to schedule payment once on the first of every month.
+Any exceptional situations shouldn't prevent job from charging invoices. Any retry mechanism could be helpful here.
+
+Charging includes user balance changing and invoice status update. All payment tasks are executed asynchronously
+and in parallel. Coroutines are used for asynchronous approach. User balance shouldn't be < 0, 
+so it's necessary to block one database record (not whole logic block in the code) in general case. 
+In current implementation payment tasks are grouped by customer id and charging is executed for every customer sequentially.
+
+There were no requirements regarding charging conditions. So it's charged on the first of every month for the previous month.
+Late invoices should be paid first.
+
+Handling exception situation is implemented to just logging an error.
+
+### Possible Project Improvements (Since I've been working closely with AWS recently, most of my technical and architectural decisions will be based on it.)
+
+* Billing cron job
+    * As for now cron job is executed only once in a month but application will be running always. It would be great
+to run application only when it's needed. I would schedule AWS EC2/Lambda to call a service on demand. 
+    * Cron job execution  will be retried after any exceptions. It would be great to have AWS Load Balancer 
+to switch to other cron job in case of any server breaks.
+    * As for now invoices are retrieved from database by status and date to make a payment for each of them. 
+When customer subscribes to an application, invoice could be created asynchronously (added to a db). 
+After that, message with necessary information could be added to a queue. When event (first of the every month) is triggered,
+workers (AWS Lambdas f.e.) will pull a queue to retrieve an information what invoice to pay.
+Any message broker could be used: Apache Kafka, JMS, AWS SQS etc.
+* Exception situation
+    * When CurrencyMismatchException appears, converter could be used to transform invoice value to make user payment possible 
+(third party following exchange rate).
+    * Handling exception situation is implemented to just logging an error. 
+Maybe to use AWS Step Functions to make payment process transparent. It would be easy to understand 
+on what step the error appears and to execute appropriate logic. Or to use event base approach.
+* Payment
+    * It would be great to use some third parties there.
+    * Late invoices are paid first. Maybe to implement logic that makes possible
+to pay for all invoices of a user which it could pay. In case of user has not enough balance, 
+an email could be send to suggest to pay for a certain invoice with a deadline. Or to suggest using credit.
+    * Performing payment puts into account timezone.
+    * Implement discounts possibility.
+* Storage
+    * Invoice table will be huge in the future. Only later information is need, so archiving could be used here.
+* Performance
+    * Since invoices list could be huge, they could be retrieved in chunks (pagination). Indexes could be also helpful there.
+    * Batch calls to a database.
+* Authorization
+* Additional services
+    * Creating an invoice.
+    * Implement service for balance increasing (f.e. after salary etc.)
 
 ### Way of implementing
 
@@ -118,7 +167,7 @@ Happy hacking 😁!
 
 ##### Points for improvements:
 * Transform value in accordance in currency to make payment possible even in currencies don't match
-* Implement mock service for balance increasing every months (f.e. after salary)
+* Implement service for balance increasing every months (f.e. after salary)
 * Payment optimization. User could have many invoices. Service should define maximum possible invoices that could be paid in accordance with user balance.
 
 #### 26 May (In total: 3h)
@@ -144,7 +193,7 @@ Read about issues in exposed library to perform batch calls.
 * How to handle critical situations (f.e server isn't working)? 
     * Are retries and transactions enough? 
     * Maybe store invoices in external queue? It could help not to miss any invoices charging even after server break. 
-    * Load Balancer could be also helpful if server broke.
+    * Load Balancer could be also helpful if server brokes.
 
 #### 28 May (In total: 4.5h)
 * Adds unit tests for data package
@@ -156,3 +205,12 @@ Read about issues in exposed library to perform batch calls.
 
 ##### Points for improvements:
 * Retrieve invoices using pagination
+
+#### 30 May (In total: 3h)
+* Refactors
+* Adds sequence diagram for billing logic
+
+##### Points for improvements:
+* Creating an invoice with pending status when user subscribes to a service
+* Performing payment putting into account timezone
+* Authorization

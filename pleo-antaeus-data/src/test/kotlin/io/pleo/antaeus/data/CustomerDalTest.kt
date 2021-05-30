@@ -2,6 +2,8 @@ package io.pleo.antaeus.data
 
 import io.pleo.antaeus.models.Currency
 import io.pleo.antaeus.models.Customer
+import io.pleo.antaeus.utils.CustomerTable
+import io.pleo.antaeus.utils.setupCustomers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -21,14 +23,14 @@ class CustomerDalTest {
 
     private val customerTable = CustomerTable
 
-    private val db = Database.connect("jdbc:sqlite:/tmp/customertestdata.db", "org.sqlite.JDBC")
-    private val customerDal = CustomerDal(db = db)
+    private val database = Database.connect("jdbc:sqlite:/tmp/customertestdata.db", "org.sqlite.JDBC")
+    private val customerDal = CustomerDal(database = database)
 
     @BeforeEach
     fun before() {
         runBlocking {
             TransactionManager.manager.defaultIsolationLevel = Connection.TRANSACTION_SERIALIZABLE
-            transaction(db) {
+            transaction(database) {
                 addLogger(StdOutSqlLogger)
                 SchemaUtils.drop(customerTable)
                 SchemaUtils.create(customerTable)
@@ -38,7 +40,7 @@ class CustomerDalTest {
 
     @Test
     fun `fetchCustomer when there's no customers with such id`() = runBlocking {
-        populateData()
+        setupCustomers(10, customerDal)
 
         val nonExistedId = 1000
         val customer = customerDal.fetchCustomer(nonExistedId)
@@ -48,7 +50,7 @@ class CustomerDalTest {
 
     @Test
     fun `fetchCustomer by id returns customer`() = runBlocking {
-        populateData()
+        setupCustomers(10, customerDal)
 
         val expectedCurrency = Currency.values()[Random.nextInt(0, Currency.values().size)]
         val expectedBalance = BigDecimal(Random.nextDouble(10.0, 500.0))
@@ -66,7 +68,7 @@ class CustomerDalTest {
 
     @Test
     fun `fetchCustomers returns customer list`() = runBlocking {
-        val expectedCustomerList = populateData()
+        val expectedCustomerList = setupCustomers(10, customerDal)
 
         val actualCustomerList = customerDal.fetchCustomers()
 
@@ -82,14 +84,5 @@ class CustomerDalTest {
         val actualCustomer = customerDal.createCustomer(expectedCurrency, expectedBalance)
 
         assertEquals(1, actualCustomer?.id)
-    }
-
-    private suspend fun populateData(): List<Customer> {
-        return (1..10).mapNotNull {
-            customerDal.createCustomer(
-                currency = Currency.values()[Random.nextInt(0, Currency.values().size)],
-                balance = BigDecimal(Random.nextDouble(10.0, 500.0))
-            )
-        }
     }
 }

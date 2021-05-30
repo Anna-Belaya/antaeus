@@ -5,18 +5,13 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import io.pleo.antaeus.core.exceptions.InvoiceNotFoundException
 import io.pleo.antaeus.data.InvoiceDal
-import io.pleo.antaeus.models.Currency
-import io.pleo.antaeus.models.Customer
 import io.pleo.antaeus.models.Invoice
 import io.pleo.antaeus.models.InvoiceStatus
-import io.pleo.antaeus.models.Money
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import java.math.BigDecimal
 import java.time.LocalDateTime
-import kotlin.random.Random
 
 class InvoiceServiceTest {
     private val dal = mockk<InvoiceDal>()
@@ -45,7 +40,7 @@ class InvoiceServiceTest {
 
     @Test
     fun `fetchAll returns invoice list`() = runBlockingTest {
-        val expectedInvoiceList = generateInvoiceList()
+        val expectedInvoiceList = generateInvoiceList(InvoiceStatus.PAID)
 
         coEvery {
             dal.fetchInvoices()
@@ -72,7 +67,7 @@ class InvoiceServiceTest {
 
     @Test
     fun `fetchAllByStatus returns invoice list`() = runBlockingTest {
-        val expectedInvoiceList = generateInvoiceList()
+        val expectedInvoiceList = generateInvoiceList(InvoiceStatus.PAID)
 
         coEvery {
             dal.fetchInvoicesByStatus(InvoiceStatus.PAID, startPaymentDate, endPaymentDate)
@@ -103,7 +98,7 @@ class InvoiceServiceTest {
 
     @Test
     fun `fetch by id returns invoice`() = runBlockingTest {
-        val expectedInvoice = generateInvoiceList()[0]
+        val expectedInvoice = generateInvoiceList(InvoiceStatus.PAID)[0]
         val invoiceId = expectedInvoice.id
 
         coEvery {
@@ -113,34 +108,5 @@ class InvoiceServiceTest {
         assertEquals(expectedInvoice, invoiceService.fetch(invoiceId))
 
         coVerify(exactly = 1) { dal.fetchInvoice(invoiceId) }
-    }
-
-    private fun generateInvoiceList(): MutableList<Invoice> {
-        val expectedInvoiceList = mutableListOf<Invoice>()
-        val customers = (1..3).mapNotNull {
-            Customer(
-                id = it,
-                currency = Currency.values()[Random.nextInt(0, Currency.values().size)],
-                balance = BigDecimal(Random.nextDouble(10.0, 500.0))
-            )
-        }
-
-        customers.flatMap { customer ->
-            (1..3).mapNotNull {
-                val invoice = Invoice(
-                    id = it,
-                    customerId = customer.id,
-                    amount = Money(
-                        value = BigDecimal(Random.nextDouble(10.0, 500.0)),
-                        currency = customer.currency
-                    ),
-                    status = InvoiceStatus.PAID,
-                    created = LocalDateTime.now().toString()
-                )
-                expectedInvoiceList.add(invoice)
-            }
-        }
-
-        return expectedInvoiceList
     }
 }

@@ -5,6 +5,8 @@ import io.pleo.antaeus.models.Customer
 import io.pleo.antaeus.models.Invoice
 import io.pleo.antaeus.models.InvoiceStatus
 import io.pleo.antaeus.models.Money
+import io.pleo.antaeus.utils.CustomerTable
+import io.pleo.antaeus.utils.InvoiceTable
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -23,10 +25,10 @@ class PaymentDalTest {
 
     private val tables = arrayOf(CustomerTable, InvoiceTable)
 
-    private val db = Database.connect("jdbc:sqlite:/tmp/paymenttestdata.db", "org.sqlite.JDBC")
-    private val customerDal = CustomerDal(db = db)
-    private val invoiceDal = InvoiceDal(db = db)
-    private val paymentDal = PaymentDal(db = db)
+    private val database = Database.connect("jdbc:sqlite:/tmp/paymenttestdata.db", "org.sqlite.JDBC")
+    private val customerDal = CustomerDal(database = database)
+    private val invoiceDal = InvoiceDal(database = database)
+    private val paymentDal = PaymentDal(database = database)
 
     private val expectedCurrency = Currency.values()[Random.nextInt(0, Currency.values().size)]
 
@@ -34,7 +36,7 @@ class PaymentDalTest {
     fun before() {
         runBlocking {
             TransactionManager.manager.defaultIsolationLevel = Connection.TRANSACTION_SERIALIZABLE
-            transaction(db) {
+            transaction(database) {
                 addLogger(StdOutSqlLogger)
                 SchemaUtils.drop(*tables)
                 SchemaUtils.create(*tables)

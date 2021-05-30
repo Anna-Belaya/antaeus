@@ -4,7 +4,8 @@ import io.pleo.antaeus.models.Currency
 import io.pleo.antaeus.models.Customer
 import io.pleo.antaeus.models.Invoice
 import io.pleo.antaeus.models.InvoiceStatus
-import io.pleo.antaeus.models.Money
+import io.pleo.antaeus.utils.InvoiceTable
+import io.pleo.antaeus.utils.setupInvoice
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -25,8 +26,8 @@ class InvoiceDalTest {
 
     private val invoiceTable = InvoiceTable
 
-    private val db = Database.connect("jdbc:sqlite:/tmp/invoicetestdata.db", "org.sqlite.JDBC")
-    private val invoiceDal = InvoiceDal(db = db)
+    private val database = Database.connect("jdbc:sqlite:/tmp/invoicetestdata.db", "org.sqlite.JDBC")
+    private val invoiceDal = InvoiceDal(database = database)
 
     private val startPaymentDate = LocalDateTime.now()
         .minusDays(1)
@@ -39,7 +40,7 @@ class InvoiceDalTest {
     fun before() {
         runBlocking {
             TransactionManager.manager.defaultIsolationLevel = Connection.TRANSACTION_SERIALIZABLE
-            transaction(db) {
+            transaction(database) {
                 addLogger(StdOutSqlLogger)
                 SchemaUtils.drop(invoiceTable)
                 SchemaUtils.create(invoiceTable)
@@ -115,7 +116,7 @@ class InvoiceDalTest {
 
         customers.flatMap { customer ->
             (1..10).mapNotNull {
-                val invoice = generateInvoice(customer.currency, customer)
+                val invoice = setupInvoice(invoiceDal, customer.currency, customer, it)
                 if (invoice != null) {
                     invoiceList.add(invoice)
                 }
@@ -129,7 +130,7 @@ class InvoiceDalTest {
         val expectedCurrency = Currency.values()[Random.nextInt(0, Currency.values().size)]
         val expectedCustomer = generateCustomer(1000)
 
-        return generateInvoice(expectedCurrency, expectedCustomer)
+        return setupInvoice(invoiceDal, expectedCurrency, expectedCustomer, 0)
     }
 
     private fun generateCustomer(customerId: Int): Customer {
@@ -137,16 +138,5 @@ class InvoiceDalTest {
         val expectedBalance = BigDecimal(Random.nextDouble(10.0, 500.0))
 
         return Customer(customerId, expectedCurrency, expectedBalance)
-    }
-
-    private suspend fun generateInvoice(expectedCurrency: Currency, expectedCustomer: Customer): Invoice? {
-        return invoiceDal.createInvoice(
-            amount = Money(
-                value = BigDecimal(Random.nextDouble(10.0, 500.0)),
-                currency = expectedCurrency
-            ),
-            customer = expectedCustomer,
-            status = InvoiceStatus.PAID
-        )
     }
 }

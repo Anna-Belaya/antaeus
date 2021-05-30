@@ -8,6 +8,8 @@
 package io.pleo.antaeus.data
 
 import io.pleo.antaeus.models.InvoiceStatus
+import io.pleo.antaeus.utils.CustomerTable
+import io.pleo.antaeus.utils.InvoiceTable
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SqlExpressionBuilder
@@ -16,9 +18,9 @@ import org.jetbrains.exposed.sql.update
 import java.math.BigDecimal
 
 
-class PaymentDal(private val db: Database) {
+class PaymentDal(private val database: Database) {
     suspend fun makePayment(invoiceId: Int, customerId: Int, subtractedBalanceValue: BigDecimal) {
-        newSuspendedTransaction(Dispatchers.IO, db) {
+        newSuspendedTransaction(Dispatchers.IO, database) {
             subtractCustomerBalance(customerId, subtractedBalanceValue)
             updateInvoiceToBePaid(invoiceId)
         }

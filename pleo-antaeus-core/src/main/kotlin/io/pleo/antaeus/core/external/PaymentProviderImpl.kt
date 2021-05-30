@@ -15,7 +15,7 @@ class PaymentProviderImpl(
 ) : PaymentProvider {
 
     @Throws(CustomerNotFoundException::class)
-    override suspend fun charge(invoice: Invoice): Boolean {
+    override suspend fun isChargeable(invoice: Invoice): Boolean {
         if (InvoiceStatus.PAID == invoice.status) {
             throw SideUpdateException(invoice.id)
         }
@@ -29,9 +29,7 @@ class PaymentProviderImpl(
         if (customer.balance < invoice.amount.value) {
             logger.debug("Customer '${customer.id}' doesn't have enough balance to make a payment")
             return false
-            /*
-            * Maybe send a notification to a customer.
-            * */
+            // Maybe send a notification to a customer.
         }
 
         return true
